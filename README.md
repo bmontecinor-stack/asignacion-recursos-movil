@@ -1,124 +1,110 @@
-# 📊 ASIGNACIÓN DE RECURSOS – MÓVIL
+# 📊 ASIGNACIÓN DE RECURSOS – MÓVIL (End-to-End)
 
-## 1. Objetivo del proceso
+## 1) Objetivo
 
-El proceso de **Asignación de Recursos – Móvil** tiene como objetivo:
+Este proyecto consolida información operativa y financiera para el proceso **Asignación de Recursos – Móvil**, integrando:
+- Ventas / base operativa (FLO Segmentos)
+- Cierres del canal GGTT
+- QNP (calidad/no pago)
+- Curvas de permanencia (por Canal y por Segmento)
 
-- Consolidar información operativa y financiera de múltiples fuentes.
-- Integrar datos de ventas, QNP, cierres GGTT y permanencias.
-- Calcular ingresos proyectados a 12 meses.
-- Generar una sábana consolidada final para análisis estratégico y toma de decisiones.
-
-Este flujo permite transformar bases operativas dispersas en un modelo consolidado de ingresos y curvas de permanencia.
+El resultado final se utiliza en **Power BI** para análisis y visualización, relacionando:
+- **Sábana de Ingresos Final (Móvil)** (ingresos proyectados + variables operativas)
+- **Sábana de Gasto de Venta** (costos por canal-proceso)
 
 ---
 
-## 2. Alcance
+## 2) Alcance
 
 Incluye:
-
-- Consolidación incremental mensual
-- Cruce de bases FLO, GGTT y QNP
-- Generación de TNP para curvas
+- Consolidación incremental mensual (parquets)
+- Cruces FLO + QNP + GGTT
+- Generación de archivo “TNP para curvas”
 - Aplicación de curvas de permanencia
-- Cálculo de ingresos proyectados
-- Generación de parquet final consolidado
+- Cálculo de ingresos proyectados a 12 meses
+- Carga y modelamiento en Power BI (relaciones + transformaciones)
+- Visualización de métricas de negocio
 
 No incluye:
-- Modelamiento en Power BI
-- Análisis de performance o visualizaciones
+- Automatización de publicación (Service) ni pipelines DevOps (por ahora)
 
 ---
 
-## 3. Arquitectura General del Pipeline
+## 3) Fuentes y Salidas (alto nivel)
 
-Excel FLO (Segmentos)
-        ↓
-PARQUET CONSOLIDADO MOVIL FLO
-        ↓
-Excel QNP → PARQUET QNP
-        ↓
-Excel GGTT → PARQUET CIERRES GGTT
-        ↓
-1. FLO + QNP + GGTT + PRE_ING + TNP
-        ↓
-TNP para curvas.xlsx
-        ↓
-Permanencias Control Gestión v2
-        ↓
-2. CONSOLIDADO INGRESOS FINAL
-        ↓
-Consolidado Ingresos Final Movil.parquet
+### Fuentes (Inputs)
+- **FLO Segmentos (Excel)**: carpeta de Segmentos (mensual)
+- **Cierres GGTT (Excel)**: carpeta cierres GGTT (mensual)
+- **QNP (Excel)**: carpeta bases QNP (mensual)
+- **Permanencias Control de Gestión Móvil v2 (Excel)**: curvas por canal
+- **Permanencias Segmentos (Excel)**: curvas por segmento
+- **DICCIONARIO.xlsx**: parametrizaciones y catálogos
+- **GASTO DE VENTA (base para Power BI)**: costos por canal-proceso (fuente paralela a ingresos)
 
----
-
-## 4. Estructura del Proceso
-
-El pipeline está dividido en 5 módulos independientes:
-
-1. Consolidación FLO
-2. Consolidación GGTT
-3. Consolidación QNP
-4. Integración + PRE_ING + generación TNP
-5. Aplicación de curvas + cálculo final de ingresos
-
-Cada módulo puede ejecutarse de forma independiente y es incremental por período.
+### Salidas (Outputs)
+- **Consolidado Movil Hogar FLO.parquet** (sábana madre operacional)
+- **Consolidado QNP.parquet**
+- **Consolidado GGTT Cierre Mes 2025.parquet**
+- **Consolidado FLO + QNP + GGTT+PRE_ING.parquet**
+- **TNP para curvas.xlsx**
+- **Consolidado Ingresos Final Movil.parquet** (base final para BI)
+- **Power BI**: modelo con Ingresos Final + Gasto de Venta y visualizaciones
 
 ---
 
-## 5. Inputs Principales
+## 4) Arquitectura del Pipeline (end-to-end)
 
-| Fuente | Tipo | Frecuencia |
-|--------|------|------------|
-| Segmentos (FLO) | Excel | Mensual |
-| Cierres GGTT | Excel | Mensual |
-| QNP | Excel | Mensual |
-| Permanencias Control Gestión v2 | Excel | Actualización periódica |
-| Diccionario | Excel | Bajo demanda |
+### A) Construcción de datos (Python → Parquet)
+1. `PARQUET CONSOLIDADO MOVIL FLO`  
+2. `PARQUET CIERRES GGTT`  
+3. `PARQUET QNP MOVILES 2025`  
+4. `1. FLO+QNP+GGTT+PRE_ING Y CREA TNP CURVAS`  
+5. `2. CONSOLIDADO INGRESOS FINAL`  
 
----
+### B) Consumo analítico (Power BI)
+6. Power BI carga:
+- `Consolidado Ingresos Final Movil.parquet`
+- Base `GASTO DE VENTA` (costos canal-proceso)
 
-## 6. Outputs Principales
-
-| Archivo | Descripción |
-|---------|-------------|
-| Consolidado Movil Hogar FLO.parquet | Sábana madre operacional |
-| Consolidado QNP.parquet | Base QNP consolidada |
-| Consolidado GGTT.parquet | Cierres canal GGTT |
-| Consolidado FLO + QNP + GGTT + PRE_ING.parquet | Base enriquecida pre-ingresos |
-| TNP para curvas.xlsx | Input para curvas |
-| Consolidado Ingresos Final Movil.parquet | Base final lista para análisis |
+7. Power BI:
+- Relaciona ambas bases
+- Aplica transformaciones/modelado
+- Construye visuales y métricas de negocio
 
 ---
 
-## 7. Lógica de Negocio Clave
+## 5) Lógica de negocio clave
 
-- Consolidación incremental por Mes (numérico)
-- Reemplazo completo del período si ya existe
-- Cruces mediante llaves normalizadas
-- Aplicación diferenciada de curvas:
-  - MIS
-  - NO MIS
-- Cálculo de:
-  - Precio A.R
-  - Ingreso Churn 12M
-  - Ingreso Actividad 12M
-  - Ingreso Total Canal / Segmento
-
----
-
-## 8. Controles de Calidad Recomendados
-
-- Validación de periodos detectados
-- % match en cruces
-- Duplicados por llave
-- Validación de ingresos negativos o nulos
-- Consistencia de curvas asignadas
+- Consolidación incremental por **período** (Mes (numérico) / id_mes):
+  - si el período ya existe → se reemplaza completo
+  - si no existe → se agrega
+- Cruces por llaves normalizadas (ej. orden / rut / teléfono según disponibilidad)
+- Curvas aplicadas en dos niveles:
+  - **Curva Canal**
+  - **Curva Segmento**
+- Ingresos:
+  - cálculo de ingreso de actividad 12M (curva × precio) + ingreso churn
+  - totales por canal y por segmento según curvas asignadas
 
 ---
 
-## 9. Owner del Proceso
+## 6) Controles de calidad recomendados
 
-Responsable funcional y técnico:
-Bernardo Montecino  
-Líder de Proyecto – Entel
+- Periodos detectados vs esperados (ej. 202601 presente)
+- % match por cruce (FLO↔QNP, FLO↔GGTT, PRE_ING↔Curvas)
+- Duplicados por llaves relevantes (nro_orden / Número Orden)
+- Validación de nulos en campos críticos (precio, curva, ingreso)
+- Revisión de outliers de ingresos (negativos o extremos)
+
+---
+
+## 7) Documentación detallada
+
+- Ver fichas de cada módulo en `/docs`
+- Glosario y definiciones de campos en `/docs/00_glosario.md`
+
+---
+
+## 8) Owner
+
+Bernardo Montecino — Líder de Proyecto (Entel)
