@@ -108,3 +108,28 @@ No incluye:
 ## 8) Owner
 
 Bernardo Montecino — Líder de Proyecto (Entel)
+
+---
+
+## 🔄 Flujo End-to-End Resumido
+
+Construcción de datos (Python):
+
+FLO → GGTT → QNP  
+↓  
+PRE_ING + TNP  
+↓  
+Consolidado Ingresos Final (Parquet)
+
+↓
+
+Consumo analítico (Power BI):
+
+Ingresos Final  
++  
+Gasto de Venta  
+↓  
+Modelo relacional  
+↓  
+Visualizaciones estratégicas
+
