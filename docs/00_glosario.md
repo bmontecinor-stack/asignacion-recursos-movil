@@ -3,7 +3,7 @@
 ## Conceptos
 - **FLO (Segmentos):** base operacional mensual que actúa como sábana madre.
 - **GGTT:** canal con cierres mensuales que se consolidan aparte.
-- **QNP:** base asociada a calidad/no pago (se integra para curvas/ajustes).
+- **QNP:** base asociada a cantidad/no pago (se integra para curvas/ajustes).
 - **Curvas de permanencia:** factores para proyectar comportamiento e ingreso a 12 meses.
 - **PRE_ING:** base “pre-ingresos” enriquecida antes de aplicar curvas finales.
 
