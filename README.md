@@ -1,4 +1,4 @@
-# 📊 ASIGNACIÓN DE RECURSOS – MÓVIL (End-to-End)
+#  ASIGNACIÓN DE RECURSOS – MÓVIL (End-to-End)
 
 ## 1) Objetivo
 
